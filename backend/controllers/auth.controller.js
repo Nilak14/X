@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 export const signup = async (req, res) => {
   try {
     const { fullName, username, email, password } = req.body;
-
+    console.log(req.body);
     if (
       [fullName, username, email, password].some((field) => field.trim() === "")
     ) {
@@ -44,8 +44,9 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
     if (newUser) {
-      generateTokenAndSetCookie(newUser._id, res);
+      console.log(newUser);
       await newUser.save(); // saving to db
+      generateTokenAndSetCookie(newUser._id, res);
       res.status(200).json({
         _id: newUser._id,
         fullName: newUser.fullName,
