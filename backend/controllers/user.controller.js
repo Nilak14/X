@@ -163,5 +163,8 @@ export const updateUser = async (req, res) => {
     user.password = null;
 
     return res.status(200).json(user);
-  } catch (error) {}
+  } catch (error) {
+    console.log(`Error on updateUser: ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
 };
