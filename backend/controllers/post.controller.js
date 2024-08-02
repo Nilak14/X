@@ -33,3 +33,50 @@ export const createPost = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const deletePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    if (post.user.toString() !== req.user._id.toString()) {
+      return res.status(400).json({ error: "You cant delete this post" });
+    }
+    if (post.image) {
+      await cloudinary.uploader.destroy(
+        post.image.split("/").pop().split(".")[0]
+      );
+    }
+    await Post.findByIdAndDelete(req.params.id);
+    return res.status(200).json({ message: "Deleted successfully" });
+  } catch (error) {
+    console.log(`Error in create post ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const commentPost = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (text.trim() === "") {
+      return res.status(400).json({ error: "Comment cant be empty" });
+    }
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    const userId = req.user._id;
+    const comment = { user: userId, text };
+
+    post.comments.push(comment);
+    await post.save();
+
+    return res.status(200).json(post);
+  } catch (error) {
+    console.log(`Error in create post ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
