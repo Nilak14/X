@@ -8,6 +8,7 @@ export const protectRoute = async (req, res, next) => {
       return res.status(401).json({ error: "Unauthorized access" });
     }
     const decode = jwt.verify(token, process.env.JWT_SECRET);
+
     if (!decode) {
       return req
         .status(401)
