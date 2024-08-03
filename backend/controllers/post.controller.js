@@ -80,3 +80,11 @@ export const commentPost = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const likeUnlikePost = async (req, res) => {
+  try {
+  } catch (error) {
+    console.log(`Error in like Unlike post ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
