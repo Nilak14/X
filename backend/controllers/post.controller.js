@@ -1,4 +1,3 @@
-import { json } from "express";
 import Notification from "../models/notification.model.js";
 import Post from "../models/post.model.js";
 import { User } from "../models/user.model.js";
