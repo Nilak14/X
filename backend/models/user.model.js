@@ -1,4 +1,4 @@
-import mongoose, { model, Schema } from "mongoose";
+import mongoose, { model, Mongoose, Schema } from "mongoose";
 const userSchema = new Schema(
   {
     username: {
@@ -50,6 +50,13 @@ const userSchema = new Schema(
       type: String,
       default: "",
     },
+    likedPost: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+        default: [],
+      },
+    ],
   },
   { timestamps: true }
 );

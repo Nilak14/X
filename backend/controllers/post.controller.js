@@ -1,3 +1,4 @@
+import { json } from "express";
 import Notification from "../models/notification.model.js";
 import Post from "../models/post.model.js";
 import { User } from "../models/user.model.js";
@@ -89,7 +90,8 @@ export const likeUnlikePost = async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: "Cannot find the post" });
     }
-    const userId = res.user._id;
+    const userId = req.user._id;
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -98,9 +100,11 @@ export const likeUnlikePost = async (req, res) => {
     if (userLikedPost) {
       //unlike
       await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
+      await User.updateOne({ _id: userId }, { $pull: { likedPost: postId } });
       res.status(200).json({ message: "Post unlike successfully" });
     } else {
       await Post.updateOne({ _id: postId }, { $push: { likes: userId } });
+      await User.updateOne({ _id: userId }, { $push: { likedPost: postId } });
       const notification = new Notification({
         from: userId,
         to: post.user,
@@ -111,6 +115,98 @@ export const likeUnlikePost = async (req, res) => {
     }
   } catch (error) {
     console.log(`Error in like Unlike post ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getAllPosts = async (req, res) => {
+  try {
+    const posts = await Post.find()
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "user",
+        select: "-password -email",
+      })
+      .populate({
+        path: "comments.user",
+        select: "-password -email",
+      });
+    console.log(posts);
+
+    if (posts.length === 0) {
+      return res.status(200).json([]);
+    }
+    return res.status(200).json(posts);
+  } catch (error) {
+    console.log(`Error in get all post ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getLikedPost = async (req, res) => {
+  try {
+    const { id: userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const userLikedPost = await Post.find({ _id: { $in: user.likedPost } })
+      .populate({ path: "user", select: "-password" })
+      .populate({ path: "comments.user", select: "-password" });
+
+    if (userLikedPost.length === 0) {
+      return res.status(200).json([]);
+    }
+    return res.status(200).json(userLikedPost);
+  } catch (error) {
+    console.log(`Error in get Liked Post ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getFollowingPost = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404), json({ error: "User not found" });
+    }
+    const followingPost = await Post.find({
+      user: { $in: user.following },
+    })
+      .sort({ createdAt: -1 })
+      .populate({ path: "user", select: "-password -email" })
+      .populate({ path: "comments.user", select: "-password -email" });
+
+    if (followingPost.length === 0) {
+      return res.status(200).json([]);
+    }
+    return res.status(200).json(followingPost);
+  } catch (error) {
+    console.log(`Error in get following Post ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
+export const getUserPost = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const user = await User.findOne({ username: username });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const userPost = await Post.find({ user: { $in: user._id } })
+      .sort({ createdAt: -1 })
+      .populate({ path: "user", select: "-password -email" })
+      .populate({ path: "comments.user", select: "-password -email" });
+    if (userPost.length === 0) {
+      return res.status(200).json([]);
+    }
+    res.status(200).json(userPost);
+  } catch (error) {
+    console.log(`Error in get getUser Post ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };
